@@ -20,21 +20,21 @@
        (map (comp (partial map parse-long)
                   (fn [s] (s/split s #" "))))))
 
-(def safe-range 3)
+(defn- ordered?
+  [xs]
+  (or
+   (apply < xs)
+   (apply > xs)))
 
-(defn safe?
-  [dir x1 x2]
-  (and
-   (if (= :asc dir) (neg? (- x1 x2)) (pos? (- x1 x2)))
-   (>= safe-range (abs (- x1 x2)))))
+(defn- acceptable-step-interval?
+  [[x y z]]
+  (>= 3 (max (abs (- x y)) (abs (- y z)))))
 
 (defn safe-set?
   [xs]
-  (let [order (if (neg? (- (first xs) (second xs))) :asc :desc)]
-    (for [[x1 x2] (partition 2 1 xs)]
-      (safe? order x1 x2))))
+  (for [ixs (partition 3 1 xs)]
+    (and
+     (ordered? ixs)
+     (acceptable-step-interval? ixs))))
 
-(count (filter (comp #(every? true? %) safe-set?) (parse-input input)))
-
-;; -------
-
+(count (filter true? (map (comp (partial every? true?) safe-set?) (parse-input input))))
